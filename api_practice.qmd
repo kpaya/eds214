@@ -1,0 +1,82 @@
+---
+title: "data_retrival"
+format: html
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+library(tidyverse)
+library(dataRetrieval)
+library(httr)
+library(purrr)
+```
+
+```{r}
+# Choptank River near Greensboro, MD:
+siteNumber <- "01491000"
+parameterCd <- "00060" # Discharge
+startDate <- "2009-10-01"
+endDate <- "2012-09-30"
+
+discharge <- readNWISdv(siteNumber, parameterCd, startDate, endDate)
+```
+
+```{r}
+siteNumber <- "01491000"
+parameterCd <- c("00010", "00060") # Temperature and discharge
+statCd <- c("00001", "00003") # Mean and maximum
+startDate <- "2012-01-01"
+endDate <- "2012-05-01"
+
+temperatureAndFlow <- readNWISdv(siteNumber, parameterCd,
+  startDate, endDate,
+  statCd = statCd
+)
+```
+```{r}
+names(temperatureAndFlow)
+## [1] "agency_cd"        "site_no"          "Date"            
+## [4] "X_00010_00001_cd" "X_00010_00001"    "X_00010_00003_cd"
+## [7] "X_00010_00003"    "X_00060_00003_cd" "X_00060_00003"
+
+
+temperatureAndFlow <- renameNWISColumns(temperatureAndFlow)
+names(temperatureAndFlow)
+
+# Information about the data frame attributes:
+names(attributes(temperatureAndFlow))
+
+
+```
+
+```{r}
+statInfo <- attr(temperatureAndFlow, "statisticInfo")
+variableInfo <- attr(temperatureAndFlow, "variableInfo")
+siteInfo <- attr(temperatureAndFlow, "siteInfo")
+```
+
+
+```{r}
+par(mar = c(5, 5, 5, 5)) # sets the size of the plot window
+
+plot(temperatureAndFlow$Date, temperatureAndFlow$Wtemp_Max,
+  ylab = variableInfo$parameter_desc[1],
+  xlab = ""
+)
+par(new = TRUE)
+plot(temperatureAndFlow$Date,
+  temperatureAndFlow$Flow,
+  col = "red", type = "l",
+  xaxt = "n", yaxt = "n",
+  xlab = "", ylab = "",
+  axes = FALSE
+)
+axis(4, col = "red", col.axis = "red")
+mtext(variableInfo$parameter_desc[2], side = 4, line = 3, col = "red")
+title(paste(siteInfo$station_nm, "2012"))
+legend("topleft", variableInfo$param_units,
+  col = c("black", "red"), lty = c(NA, 1),
+  pch = c(1, NA)
+)
+```
